@@ -6,7 +6,7 @@ use hyprland::{
     shared::WorkspaceType,
 };
 
-use crate::yuck;
+use crate::yuck::{self, general::GeneralWidgetProperties, Orientation, Widget};
 
 pub async fn workspace_listen() {
     if let Ok(active) = data::blocking::get_active_workspace() {
@@ -28,34 +28,36 @@ pub async fn workspace_listen() {
 }
 
 fn workspace_change_handler(id: &WorkspaceType) {
-    if let Ok(ws) = data::blocking::get_workspaces() {
-        let mut occupieds: Vec<&Workspace> = ws.iter().filter(|w| w.windows != 0).collect();
+    if let Ok(mut ws) = data::blocking::get_workspaces() {
+        ws.sort_by(|a, b| unwrap_workspace_type(&a.id).cmp(&unwrap_workspace_type(&b.id)));
 
-        occupieds.sort_by(|a, b| unwrap_workspace_type(&a.id).cmp(&unwrap_workspace_type(&b.id)));
-
-        let mut formed = String::new();
-        for ws in occupieds {
-            formed = format!(
-                "{formed} {}",
-                format_workspace(
-                    &ws.id,
-                    match &ws.id == id {
-                        true => String::from("active-workspace"),
-                        false => String::from("inactive-workspace"),
+        let mut childrens: Vec<Widget> = vec![];
+        for w in ws {
+            let a: Widget = format_workspace(
+                &w,
+                match &w.id == id {
+                    true => String::from("active-workspace"),
+                    false => match w.windows {
+                        0 => String::from("inactive-workspace"),
+                        _ => String::from("occupied-workspace"),
                     },
-                )
+                },
             );
+
+            childrens.push(a);
         }
 
         println!(
             "{}",
-            yuck::wrap_in_box(
-                Some(String::from("workspaces")),
-                Some(formed),
-                None,
-                yuck::Orientation::Horizontal,
-                true,
-            )
+            yuck::boxes::Boxes::new()
+                .set_general(Some(
+                    GeneralWidgetProperties::new()
+                        .set_class(Some(String::from("workspaces")))
+                        .to_owned()
+                ))
+                .set_children(Some(childrens))
+                .set_orientation(Some(Orientation::Horizontal))
+                .set_space_evenly(Some(false))
         );
     };
 }
@@ -67,9 +69,68 @@ fn unwrap_workspace_type(w: &WorkspaceType) -> u8 {
     }
 }
 
-fn format_workspace(id: &WorkspaceType, class: String) -> String {
-    format!(
-        "{}",
-        yuck::wrap_in_label(Some(class), format!("{}", unwrap_workspace_type(id)))
+fn format_workspace(workspace: &Workspace, class: String) -> Widget {
+    let n = yuck::label::Label::new(&format!("{}", unwrap_workspace_type(&workspace.id)))
+        .set_general(Some(
+            GeneralWidgetProperties::new()
+                .set_class(Some(class.to_owned()))
+                .set_tooltip(Some(format!(
+                    "{}",
+                    get_client(unwrap_workspace_type(&workspace.id))
+                )))
+                .to_owned(),
+        ))
+        .to_owned();
+    // let w = yuck::label::Label::new(&format!(
+    //     "{}",
+    //     get_client(unwrap_workspace_type(&workspace.id))
+    // ))
+    // .set_general(Some(
+    //     GeneralWidgetProperties::new()
+    //         .set_class(Some(class))
+    //         .set_tooltip(Some(format!(
+    //             "{}",
+    //             get_client(unwrap_workspace_type(&workspace.id))
+    //         )))
+    //         .to_owned(),
+    // ))
+    // .to_owned();
+
+    yuck::Widget::Box(
+        yuck::boxes::Boxes::new()
+            .set_children(Some(vec![Widget::Label(n)]))
+            .to_owned(),
     )
+}
+
+fn get_client(w: u8) -> String {
+    let mut v: String = String::new();
+    match hyprland::data::blocking::get_clients() {
+        Ok(c) => c
+            .iter()
+            .filter(|cl| unwrap_workspace_type(&cl.workspace.id) == w)
+            // .for_each(|cl| v.push(String::from(cl.class.split('.').last().unwrap()))),
+            .for_each(|cl| {
+                v = format!(
+                    "{}   {}-{}",
+                    v,
+                    match cl.class.split('.').last().unwrap() {
+                        "wezterm" => "",
+                        "kitty" => "",
+                        "firefox" => "",
+                        "eww" => "",
+                        "desktop" => "",
+                        _ => " ",
+                    },
+                    String::from(
+                        &cl.title
+                            .replace(" - ", "-")
+                            .replace(" ", "_")
+                            .to_lowercase()
+                    )
+                )
+            }),
+        Err(_) => return v,
+    };
+    return v;
 }

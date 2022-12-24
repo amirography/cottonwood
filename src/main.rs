@@ -1,8 +1,5 @@
 use clap::Parser;
-
-mod commands;
-mod hypr;
-mod yuck;
+use eww_hypr_config::{commands, hypr};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
