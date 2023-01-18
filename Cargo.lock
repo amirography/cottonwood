@@ -90,6 +90,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cottonwood"
+version = "0.1.0"
+dependencies = [
+ "async-recursion",
+ "clap",
+ "hyprland",
+ "strum_macros",
+ "tokio",
+]
+
+[[package]]
 name = "errno"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -108,17 +119,6 @@ checksum = "aa68f1b12764fab894d2755d2518754e71b4fd80ecfb822714a1206c2aab39bf"
 dependencies = [
  "cc",
  "libc",
-]
-
-[[package]]
-name = "eww_hypr_config"
-version = "0.1.0"
-dependencies = [
- "async-recursion",
- "clap",
- "hyprland",
- "strum_macros",
- "tokio",
 ]
 
 [[package]]

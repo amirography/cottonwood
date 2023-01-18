@@ -1,3 +1,5 @@
+#[allow(clippy::style)]
+#[warn(clippy::double_neg)]
 use std::panic;
 
 use hyprland::{
@@ -70,7 +72,7 @@ fn unwrap_workspace_type(w: &WorkspaceType) -> u8 {
 }
 
 fn format_workspace(workspace: &Workspace, class: String) -> Widget {
-    let n = yuck::label::Label::new(&format!("{}", unwrap_workspace_type(&workspace.id)))
+    let n = yuck::label::Label::new(&format!("{}", workspace.name))
         .set_general(Some(
             GeneralWidgetProperties::new()
                 .set_class(Some(class.to_owned()))

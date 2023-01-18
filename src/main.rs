@@ -1,5 +1,6 @@
+#[warn(clippy::pedantic)]
 use clap::Parser;
-use eww_hypr_config::{commands, hypr};
+use cottonwood::{commands, hypr};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
